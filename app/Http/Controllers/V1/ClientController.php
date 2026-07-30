@@ -18,7 +18,6 @@ class ClientController extends Controller
                 'name'     => 'required|string|max:255',
                 'email'    => 'required|email|unique:client,email',
                 'document' => 'required|string',
-                'password' => 'required|string|min:8',
             ],
             [
                 'name.required'     => 'O campo nome é obrigatório.',
@@ -29,8 +28,6 @@ class ClientController extends Controller
                 'email.unique'      => 'Já existe um cliente com este e-mail.',
                 'document.required' => 'O campo documento é obrigatório.',
                 'document.string'   => 'O campo documento deve ser um texto.',
-                'password.required' => 'O campo senha é obrigatório.',
-                'password.string'   => 'O campo senha deve ser um texto.',
                 'password.min'      => 'A senha deve ter pelo menos 8 caracteres.',
             ]
         );
@@ -50,11 +47,8 @@ class ClientController extends Controller
         $client->name = $validatedData['name'];
         $client->email = $validatedData['email'];
         $client->document = preg_replace('/\D/', '', $validatedData['document']);//tirar mascara do documento
-        $client->password = Hash::make($validatedData['password']);//password encryption
 
         $client->save();
-
-        unset($client->password);
 
         return response()->json($client, 201);
 

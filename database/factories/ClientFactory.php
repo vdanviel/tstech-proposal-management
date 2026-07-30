@@ -22,7 +22,6 @@ class ClientFactory extends Factory
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'document' => fake()->postcode(),
-            'password' => Hash::make('password'),
         ];
     }
 }
