@@ -1,0 +1,194 @@
+<?php
+
+namespace App\Http\Controllers\V1;
+
+use App\Enums\AppErrorType;
+use App\Enums\ProposalAuditEvent;
+use App\Enums\ProposalOrigin;
+use App\Enums\ProposalStatus;
+use App\Models\Client;
+use App\Models\Proposal;
+use App\Models\ProposalAudit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+
+class ProposalController extends Controller
+{
+
+    public function index(Request $request){
+
+        $request->validate([
+            'page' => 'integer|required',
+            'perPage' => 'integer|required',
+            'sort' => 'string',
+            'search' => 'string'
+        ]);
+
+        $page = $request->query('page', 1);
+        $perPage = $request->query('perPage', 15);
+        $sort = $request->query('sort', 'asc');
+        $search = $request->query('search');
+
+        $proposal = new Proposal();
+        $query = $proposal->newQueryWithoutScopes();
+
+        if ($search) {
+            $query->where(function ($q) use ($search, $proposal) {
+
+                foreach ($proposal->getFillable() as $attribute) {
+                    $q->orWhere($attribute, 'like', "%{$search}%");
+                }
+
+            });
+        }
+
+        $query->orderBy('created_at', $sort === 'desc' ? 'desc' : 'asc');
+
+        $results = $query->paginate(perPage: $perPage, page: $page)->getCollection();
+
+        return response()->json($results, 200);
+
+    }
+
+    public function store(Request $request ){
+
+        $validator = Validator::make($request->all(),
+            [
+                'clientId' => 'integer|required',
+                'product' => 'string|required',
+                'monthlyValue' => 'decimal:2|required',
+                'origin' => [Rule::enum(ProposalOrigin::class), 'required'],
+            ],
+            [
+                'clientId.required' => 'O campo ID do cliente é obrigatório.',
+                'clientId.integer' => 'O campo ID do cliente deve ser um número inteiro.',
+                'product.required' => 'O campo produto é obrigatório.',
+                'product.string' => 'O campo produto deve ser um texto.',
+                'monthlyValue.required' => 'O campo valor mensal é obrigatório.',
+                'monthlyValue.decimal' => 'O campo valor mensal deve ter exatamente 2 casas decimais.',
+                'origin.required' => 'O campo origem é obrigatório.',
+                'origin.enum' => 'As origens aceitas são: ' . implode(', ', array_map(fn($c) => $c->value, ProposalOrigin::cases())) . '.'
+            ]
+        );
+
+        if ($validator->fails()) {
+            return response()->json(
+            [
+                'type' => AppErrorType::VALIDATION->value,
+                'error' => $validator->errors()
+            ], 422);
+        }
+
+        $validatedInputs = $validator->validate();
+
+        //verificar se cliente existe...
+        $client = Client::find($validatedInputs['clientId'], ['*']);
+
+        if (!$client) {
+            return response()->json([
+                'type' => AppErrorType::NOTFOUND->value,
+                'error' => "O cliente não existe."
+            ], 404);
+        }
+
+        $proposal = new Proposal();
+
+        $proposal->client_id = $validatedInputs['clientId'];
+        $proposal->product = $validatedInputs['product'];
+        $proposal->status = ProposalStatus::DRAFT;
+        $proposal->monthly_value = $validatedInputs['monthlyValue'];
+        $proposal->origin = $validatedInputs['origin'];
+
+        $proposal->save();
+
+        return response()->json($proposal, 201);
+
+    }
+
+    public function update(Request $request){
+
+        $validator = Validator::make($request->all(),
+            [
+                'clientId' => 'integer|required',
+                'product' => 'string|required',
+                'monthlyValue' => 'decimal:2|required',
+                'origin' => [Rule::enum(ProposalOrigin::class), 'required'],
+            ],
+            [
+                'clientId.required' => 'O campo ID do cliente é obrigatório.',
+                'clientId.integer' => 'O campo ID do cliente deve ser um número inteiro.',
+                'product.required' => 'O campo produto é obrigatório.',
+                'product.string' => 'O campo produto deve ser um texto.',
+                'monthlyValue.required' => 'O campo valor mensal é obrigatório.',
+                'monthlyValue.decimal' => 'O campo valor mensal deve ter exatamente 2 casas decimais.',
+                'origin.required' => 'O campo origem é obrigatório.',
+                'origin.enum' => 'As origens aceitas são: ' . implode(', ', array_column(ProposalOrigin::cases(), 'value')) . '.'
+            ]
+        );
+
+        if ($validator->fails()) {
+            return response()->json(
+            [
+                'type' => AppErrorType::VALIDATION->value,
+                'error' => $validator->errors()
+            ], 422);
+        }
+
+        $validatedInputs = $validator->validate();
+
+        //atualiza dados...
+        $proposal = Proposal::find($request->route('id'), ['*']);
+
+        if (!$proposal) {
+            return response()->json([
+                'type' => AppErrorType::NOTFOUND->value,
+                'error' => "A proposta não existe."
+            ], 404);
+        }
+
+        //verificar se cliente existe...
+        $client = Client::find($validatedInputs['clientId'] , ['*']);
+
+        //verificar se cliente existe...
+        if (!$client) {
+            return response()->json([
+                'type' => AppErrorType::NOTFOUND->value,
+                'error' => "O cliente não existe."
+            ], 404);
+        }
+
+        $proposal->client_id = $client->id;
+        $proposal->product = $validatedInputs['product'];
+        $proposal->monthly_value = $validatedInputs['monthlyValue'];
+        $proposal->origin = $validatedInputs['origin'];
+
+        $proposal->save();
+
+        //cria auditoria...
+        ProposalAudit::create([
+            'proposal_id' => $proposal->id,
+            'actor' => $client->name . ":" . $client->id,
+            'event' => ProposalAuditEvent::CREATED->value,
+            'payload' => $proposal->toJson()
+        ]);
+
+        return response()->json($proposal, 200);
+
+    }
+
+    public function show(Request $request){
+
+        $found = Proposal::find($request->route('id'), ['*']);
+
+        if (!$found) {
+            return response()->json([
+                'error' => "A proposta não existe."
+            ], 404);
+        }
+
+        return response()->json($found,200);
+
+    }
+
+}
