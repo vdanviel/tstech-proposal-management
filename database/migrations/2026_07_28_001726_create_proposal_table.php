@@ -18,7 +18,7 @@ return new class extends Migration
             $table->double('monthly_value');
             $table->enum('status', ['DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED', 'CANCELED']);
             $table->enum('origin', ['APP', 'SITE', 'API']);
-            $table->integer('version');
+            $table->integer('version')->default(0);
             $table->timestamps();
             $table->softDeletes();
         });

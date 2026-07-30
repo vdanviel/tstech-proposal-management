@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('actor');
             $table->enum('event', ['CREATED', 'UPDATED_FIELDS', 'STATUS_CHANGED', 'DELETED_LOGICAL']);
             $table->json('payload');
-            $table->timestamp('created_at');
+            $table->timestamp('created_at')->useCurrent();
         });
     }
 
