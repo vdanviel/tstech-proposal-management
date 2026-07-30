@@ -21,7 +21,7 @@ class ProposalFactory extends Factory
     public function definition(): array
     {
         return [
-            'client_id' => Client::all()->pluck('id')->random(),
+            'client_id' => Client::query()->inRandomOrder()->value('id') ?? Client::factory(),
             'product' => fake()->word(),
             'monthly_value' => fake()->randomFloat(2, 0, 10000),
             'status' => fake()->randomElement(ProposalStatus::cases())->value,

@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Enums\AppErrorType;
 use Exception;
 
 trait HasOptimisticLocking
@@ -32,7 +33,7 @@ trait HasOptimisticLocking
 
             //se não afetou
             if ($affected === 0) {
-                throw new Exception("O recurso já foi alterado.");
+                throw new \Symfony\Component\HttpKernel\Exception\HttpException(409, "O recurso já foi alterado.");
             }
 
             $model->setAttribute($column, $originalVersion + 1);
