@@ -132,7 +132,7 @@ class ProposalController extends Controller
         $user = $request->user();
         ProposalAudit::create([
             'proposal_id' => $proposal->id,
-            'actor' => $user->name . ":" . $user->id,
+            'actor' => explode(" ", $user->name)[0] . ":" . $user->id,
             'event' => ProposalAuditEvent::CREATED->value,
             'payload' => $proposal->toJson()
         ]);
@@ -204,7 +204,7 @@ class ProposalController extends Controller
         $user = $request->user();
         ProposalAudit::create([
             'proposal_id' => $proposal->id,
-            'actor' => $user->name . ":" . $user->id,
+            'actor' => explode(" ", $user->name)[0] . ":" . $user->id,
             'event' => ProposalAuditEvent::UPDATED_FIELDS->value,
             'payload' => $proposal->toJson()
         ]);
@@ -254,7 +254,7 @@ class ProposalController extends Controller
         $user = $request->user();
         ProposalAudit::create([
             'proposal_id' => $proposal->id,
-            'actor' => $user->name . ":" . $user->id,
+            'actor' => explode(" ", $user->name)[0] . ":" . $user->id,
             'event' => ProposalAuditEvent::STATUS_CHANGED->value,
             'payload' => $proposal->toJson()
         ]);
@@ -290,7 +290,7 @@ class ProposalController extends Controller
         $user = $request->user();
         ProposalAudit::create([
             'proposal_id' => $proposal->id,
-            'actor' => $user->name . ":" . $user->id,
+            'actor' => explode(" ", $user->name)[0] . ":" . $user->id,
             'event' => ProposalAuditEvent::STATUS_CHANGED->value,
             'payload' => $proposal->toJson()
         ]);
@@ -326,7 +326,7 @@ class ProposalController extends Controller
         $user = $request->user();
         ProposalAudit::create([
             'proposal_id' => $proposal->id,
-            'actor' => $user->name . ":" . $user->id,
+            'actor' => explode(" ", $user->name)[0] . ":" . $user->id,
             'event' => ProposalAuditEvent::STATUS_CHANGED->value,
             'payload' => $proposal->toJson()
         ]);
@@ -362,7 +362,7 @@ class ProposalController extends Controller
         $user = $request->user();
         ProposalAudit::create([
             'proposal_id' => $proposal->id,
-            'actor' => $user->name . ":" . $user->id,
+            'actor' => explode(" ", $user->name)[0] . ":" . $user->id,
             'event' => ProposalAuditEvent::STATUS_CHANGED->value,
             'payload' => $proposal->toJson()
         ]);

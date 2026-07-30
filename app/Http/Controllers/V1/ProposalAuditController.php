@@ -2,19 +2,22 @@
 
 namespace App\Http\Controllers\V1;
 
+use App\Enums\AppErrorType;
 use App\Models\ProposalAudit;
 use Illuminate\Http\Request;
 
 class ProposalAuditController extends Controller
 {
 
+    //acha todas auditorias de uma proposta especifica
     public function show(Request $request){
 
-        $found = ProposalAudit::find($request->route('id'), ['*']);
+        $found = ProposalAudit::where('proposal_id','=',$request->route('id'))->get();
 
-        if (!$found) {
+        if ($found->isEmpty()) {
             return response()->json([
-                'error' => "A auditoria não existe."
+                'type' => AppErrorType::NOTFOUND->value,
+                'error' => "Não há auditorias."
             ], 404);
         }
 
