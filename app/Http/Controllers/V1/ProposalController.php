@@ -355,6 +355,7 @@ class ProposalController extends Controller
             ], 422);
         }
 
+        //salva o estado antes de remover...
         $proposal->status = ProposalStatus::CANCELED;
         $proposal->save();
 
@@ -366,6 +367,9 @@ class ProposalController extends Controller
             'event' => ProposalAuditEvent::STATUS_CHANGED->value,
             'payload' => $proposal->toJson()
         ]);
+
+        //remove com soft delete...
+        $proposal->delete();
 
         return response()->json($proposal, 200);
 
