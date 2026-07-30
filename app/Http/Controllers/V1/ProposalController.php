@@ -16,9 +16,9 @@ use Illuminate\Validation\Rule;
 class ProposalController extends Controller
 {
 
-    public function index(Request $request){
-
-        $request->validate([
+    public function index(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
             'page' => 'integer|required',
             'perPage' => 'integer|required',
             'sort' => 'string',
@@ -28,7 +28,27 @@ class ProposalController extends Controller
             'monthlyOp' => 'string|in:>,<,=,>=,<=',
             'monthlyValue' => 'numeric',
             'clientId' => 'numeric'
+        ], [
+            'page.required' => 'O campo página é obrigatório.',
+            'page.integer' => 'O campo página deve ser um número inteiro.',
+            'perPage.required' => 'O campo itens por página é obrigatório.',
+            'perPage.integer' => 'O campo itens por página deve ser um número inteiro.',
+            'sort.string' => 'O campo ordenação deve ser um texto.',
+            'product.string' => 'O campo produto deve ser um texto.',
+            'status.string' => 'O campo status deve ser um texto.',
+            'origin.string' => 'O campo origem deve ser um texto.',
+            'monthlyOp.string' => 'O campo operador mensal deve ser um texto.',
+            'monthlyOp.in' => 'O operador mensal deve ser um dos seguintes: >, <, =, >=, <=.',
+            'monthlyValue.numeric' => 'O campo valor mensal deve ser numérico.',
+            'clientId.numeric' => 'O campo ID do cliente deve ser numérico.',
         ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'type' => AppErrorType::VALIDATION->value,
+                'error' => $validator->errors()
+            ], 422);
+        }
 
         $page = $request->query('page', 1);
         $perPage = $request->query('perPage', 15);
@@ -67,14 +87,12 @@ class ProposalController extends Controller
 
         $paginator = $query->paginate(perPage: $perPage, page: $page);
 
-        return response()->json(
-            [
-                "data" => $paginator->items(),
-                "current" => $paginator->currentPage(),
-                "perPage" => $paginator->count(),
-                "lastPage" => $paginator->lastPage()
-            ]
-        , 200);
+        return response()->json([
+            "data" => $paginator->items(),
+            "current" => $paginator->currentPage(),
+            "perPage" => $paginator->count(),
+            "lastPage" => $paginator->lastPage()
+        ], 200);
     }
 
     public function store(Request $request ){
