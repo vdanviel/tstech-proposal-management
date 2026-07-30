@@ -22,33 +22,59 @@ class ProposalController extends Controller
             'page' => 'integer|required',
             'perPage' => 'integer|required',
             'sort' => 'string',
-            'search' => 'string'
+            'product' => 'string',
+            'status' => 'string',
+            'origin' => 'string',
+            'monthlyOp' => 'string|in:>,<,=,>=,<=',
+            'monthlyValue' => 'numeric',
+            'clientId' => 'numeric'
         ]);
 
         $page = $request->query('page', 1);
         $perPage = $request->query('perPage', 15);
         $sort = $request->query('sort', 'asc');
-        $search = $request->query('search');
+        $product = $request->query('product');
+        $status = $request->query('status');
+        $origin = $request->query('origin');
+        $monthlyOp = $request->query('monthlyOp');
+        $monthlyValue = $request->query('monthlyValue');
+        $clientId = $request->query('clientId');
 
         $proposal = new Proposal();
         $query = $proposal->newQueryWithoutScopes();
 
-        if ($search) {
-            $query->where(function ($q) use ($search, $proposal) {
+        if ($product) {
+            $query->where('product', 'like', "%{$product}%");
+        }
 
-                foreach ($proposal->getFillable() as $attribute) {
-                    $q->orWhere($attribute, 'like', "%{$search}%");
-                }
+        if ($status) {
+            $query->where('status', '=', $status);
+        }
 
-            });
+        if ($origin) {
+            $query->where('origin', '=', $origin);
+        }
+
+        if ($clientId) {
+            $query->where('client_id', '=', $clientId);
+        }
+
+        if ($monthlyOp && $monthlyValue !== null) {
+            $query->where('monthly_value', $monthlyOp, $monthlyValue);
         }
 
         $query->orderBy('created_at', $sort === 'desc' ? 'desc' : 'asc');
 
-        $results = $query->paginate(perPage: $perPage, page: $page)->getCollection();
+        $paginator = $query->paginate(perPage: $perPage, page: $page);
 
-        return response()->json($results, 200);
-
+        return response()->json(
+            [
+                "data" => $paginator->items(),
+                "current" => $paginator->currentPage(),
+                "perPage" => $paginator->count(),
+                "lastPage" => $paginator->lastPage()
+            ]
+        , 200);
     }
 
     public function store(Request $request ){
@@ -101,6 +127,15 @@ class ProposalController extends Controller
         $proposal->origin = $validatedInputs['origin'];
 
         $proposal->save();
+
+        //cria auditoria...
+        $user = $request->user();
+        ProposalAudit::create([
+            'proposal_id' => $proposal->id,
+            'actor' => $user->name . ":" . $user->id,
+            'event' => ProposalAuditEvent::CREATED->value,
+            'payload' => $proposal->toJson()
+        ]);
 
         return response()->json($proposal, 201);
 
@@ -166,10 +201,11 @@ class ProposalController extends Controller
         $proposal->save();
 
         //cria auditoria...
+        $user = $request->user();
         ProposalAudit::create([
             'proposal_id' => $proposal->id,
-            'actor' => $client->name . ":" . $client->id,
-            'event' => ProposalAuditEvent::CREATED->value,
+            'actor' => $user->name . ":" . $user->id,
+            'event' => ProposalAuditEvent::UPDATED_FIELDS->value,
             'payload' => $proposal->toJson()
         ]);
 
@@ -188,6 +224,150 @@ class ProposalController extends Controller
         }
 
         return response()->json($found,200);
+
+    }
+
+    public function submit(Request $request){
+
+        $proposal = Proposal::find($request->route('id'), ['*']);
+
+        if (!$proposal) {
+            return response()->json([
+                'type' => AppErrorType::NOTFOUND->value,
+                'error' => "A proposta não existe."
+            ], 404);
+        }
+
+        $able = $proposal->status->ableToTransitionStatus(ProposalStatus::SUBMITTED);
+
+        if (!$able) {
+            return response()->json([
+                'type' => AppErrorType::INVALID_TRANSITION->value,
+                'error' => "Não é possível enviar uma proposta com status atual '{$proposal->status->value}'."
+            ], 422);
+        }
+
+        $proposal->status = ProposalStatus::SUBMITTED;
+        $proposal->save();
+
+        //cria auditoria...
+        $user = $request->user();
+        ProposalAudit::create([
+            'proposal_id' => $proposal->id,
+            'actor' => $user->name . ":" . $user->id,
+            'event' => ProposalAuditEvent::STATUS_CHANGED->value,
+            'payload' => $proposal->toJson()
+        ]);
+
+        return response()->json($proposal, 200);
+
+    }
+
+    public function approve(Request $request){
+
+        $proposal = Proposal::find($request->route('id'), ['*']);
+
+        if (!$proposal) {
+            return response()->json([
+                'type' => AppErrorType::NOTFOUND->value,
+                'error' => "A proposta não existe."
+            ], 404);
+        }
+
+        $able = $proposal->status->ableToTransitionStatus(ProposalStatus::APPROVED);
+
+        if (!$able) {
+            return response()->json([
+                'type' => AppErrorType::INVALID_TRANSITION->value,
+                'error' => "Não é possível enviar uma proposta com status atual '{$proposal->status->value}'."
+            ], 422);
+        }
+
+        $proposal->status = ProposalStatus::APPROVED;
+        $proposal->save();
+
+        //cria auditoria...
+        $user = $request->user();
+        ProposalAudit::create([
+            'proposal_id' => $proposal->id,
+            'actor' => $user->name . ":" . $user->id,
+            'event' => ProposalAuditEvent::STATUS_CHANGED->value,
+            'payload' => $proposal->toJson()
+        ]);
+
+        return response()->json($proposal, 200);
+
+    }
+
+    public function reject(Request $request){
+
+        $proposal = Proposal::find($request->route('id'), ['*']);
+
+        if (!$proposal) {
+            return response()->json([
+                'type' => AppErrorType::NOTFOUND->value,
+                'error' => "A proposta não existe."
+            ], 404);
+        }
+
+        $able = $proposal->status->ableToTransitionStatus(ProposalStatus::REJECTED);
+
+        if (!$able) {
+            return response()->json([
+                'type' => AppErrorType::INVALID_TRANSITION->value,
+                'error' => "Não é possível enviar uma proposta com status atual '{$proposal->status->value}'."
+            ], 422);
+        }
+
+        $proposal->status = ProposalStatus::REJECTED;
+        $proposal->save();
+
+        //cria auditoria...
+        $user = $request->user();
+        ProposalAudit::create([
+            'proposal_id' => $proposal->id,
+            'actor' => $user->name . ":" . $user->id,
+            'event' => ProposalAuditEvent::STATUS_CHANGED->value,
+            'payload' => $proposal->toJson()
+        ]);
+
+        return response()->json($proposal, 200);
+
+    }
+
+    public function cancel(Request $request){
+
+        $proposal = Proposal::find($request->route('id'), ['*']);
+
+        if (!$proposal) {
+            return response()->json([
+                'type' => AppErrorType::NOTFOUND->value,
+                'error' => "A proposta não existe."
+            ], 404);
+        }
+
+        $able = $proposal->status->ableToTransitionStatus(ProposalStatus::CANCELED);
+
+        if (!$able) {
+            return response()->json([
+                'type' => AppErrorType::INVALID_TRANSITION->value,
+                'error' => "Não é possível enviar uma proposta com status atual '{$proposal->status->value}'."
+            ], 422);
+        }
+
+        $proposal->status = ProposalStatus::CANCELED;
+        $proposal->save();
+
+        //cria auditoria...
+        $user = $request->user();
+        ProposalAudit::create([
+            'proposal_id' => $proposal->id,
+            'actor' => $user->name . ":" . $user->id,
+            'event' => ProposalAuditEvent::STATUS_CHANGED->value,
+            'payload' => $proposal->toJson()
+        ]);
+
+        return response()->json($proposal, 200);
 
     }
 
