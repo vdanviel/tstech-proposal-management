@@ -1,58 +1,123 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Visão geral:
+Esse projeto é desenvolvido com Laravel e seus recursos, ele possui docker compose e swagger com Scramble.
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Orientações:
 
-## About Laravel
+### Rodar projeto:
+Para rodar e acessar o projeto em sua máquina siga os passos:
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- Rode na raiz da aplicação ``docker compose up -d``
+- No terminal do conteiner será necessário rodar as migrations da aplicação com ``docker exec -it tstech php artisan migrate``
+- Se quiser popular o banco de dados com as seeds da aplicação, rode o comando ``docker exec -it tstech php artisan db:seed``
+- Depois disso acesse: http://localhost:8300/docs/api na sua máquina para acessar o swagger
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### Entidades:
+1. **User**
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+    A entidade autenticável usuário da aplicação, é com ela que logamos e acessamos a aplicação e ela é quem as auditorias _(Proposal)_ salvam no campo de ``actor``. A estrutura salva é ``nome:id (Lucas:15)``.
 
-## Learning Laravel
+    Estrutura:
+    | Coluna      | Tipo |
+    | ----------- | ----------- |
+    | id      | int       |
+    | name   | string        |
+    | password   | string        |
+    | deleted_at   | timestamp        |
+    | created_at   | timestamp        |
+    | updated_at   | timestamp        |
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+2. **Client**
 
-## Agentic Development
+    A entidade que é o cliente da proposta, _(Proposal)_ que fica diretamente atrelada a ela.
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+    Estrutura:
+    | Coluna      | Tipo |
+    | ----------- | ----------- |
+    | id      | int       |
+    | name   | string        |
+    | document   | string        |
+    | deleted_at   | timestamp        |
+    | created_at   | timestamp        |
+    | updated_at   | timestamp        |
 
-```bash
-composer require laravel/boost --dev
+3. **Proposal**
 
-php artisan boost:install
-```
+    Entidade de propostas.
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+    Estrutura:
+    | Coluna      | Tipo |
+    | ----------- | ----------- |
+    | id      | int       |
+    | client_id   | int        |
+    | monthly_value   | double        |
+    | status   | enum('DRAFT','SUBMITTED','APPROVED','REJECTED','CANCELED')  
+    | origin   | enum('APP','SITE','API')        |
+    | version   | int        |      |
+    | created_at   | timestamp        |
+    | updated_at   | timestamp        |
+    | deleted_at   | timestamp        |
 
-## Contributing
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+4. ** ProposalAudit**
 
-## Code of Conduct
+    Entidade de auditoria. Qualquer tipo de alteração na proposta, _(Proposal)_ é gerado uma auditoria _ProposalAudit_.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+    Estrutura:
+    | Coluna      | Tipo |
+    | ----------- | ----------- |
+    | id      | int       |
+    | proposal_id   | int        |
+    | actor   | string        |
+    | event   | enum('CREATED','UPDATED_FIELDS','STATUS_CHANGED','DELETED_LOGICAL')  
+    | payload   | longtext        |      |
+    | created_at   | timestamp        |
+    | updated_at   | timestamp        |
+    | deleted_at   | timestamp        |
 
-## Security Vulnerabilities
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Testes:
 
-## License
+Os testes do sistema são feito com PHPUnit. Para visualizar acesse _/tests/Feature/_.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- Transação válida/inválida:
+    - Comando: ``docker exec -it tstech php artisan test tests/Feature/AvailableProposalStatusTransitionsTest.php``
+    - Link: https://github.com/vdanviel/tstech-proposal-management/blob/main/tests/Feature/AvailableProposalStatusTransitionsTest.php
+- Idempotência:
+    - Comando: ``docker exec -it tstech php artisan test tests/Feature/IdempotencySavingTest.php``
+    - Link: https://github.com/vdanviel/tstech-proposal-management/blob/main/tests/Feature/IdempotencySavingTest.php
+- Conflito de versão:
+    - Comando: ``docker exec -it tstech php artisan test tests/Feature/OptimisticLockingSavingTest.php``
+    - Link: https://github.com/vdanviel/tstech-proposal-management/blob/main/tests/Feature/OptimisticLockingSavingTest.php
+- Busca com filtros e paginação:
+    - Comando: ``docker exec -it tstech php artisan test tests/Feature/PaginationFilterSearchTest.php``
+    - Link: https://github.com/vdanviel/tstech-proposal-management/blob/main/tests/Feature/PaginationFilterSearchTest.php
+
+#
+
+### Visão de requisitos:
+- Padrão de erros: 
+    - https://github.com/vdanviel/tstech-proposal-management/blob/main/config/app.php [padrão de responses]
+    - https://github.com/vdanviel/tstech-proposal-management/blob/main/app/Enums/AppErrorType.php [tipagem de erros]
+
+- Idempotency-Key: 
+    - https://github.com/vdanviel/tstech-proposal-management/blob/main/app/Http/Middleware/IdempotencyMiddleware.php [um middleware adicionado em todas as rotas que alteram ou criam um registro]
+
+- Optimistic Lock: 
+    - https://github.com/vdanviel/tstech-proposal-management/tree/main/app/Traits/HasOptimisticLocking.php [um trait que utiliza o evento de ciclo de vida de models no Laravel "``updating::``"]
+
+- Fluxo de status: 
+    - https://github.com/vdanviel/tstech-proposal-management/blob/main/app/Enums/ProposalStatus.php [um enum que dispõe de um metodo chamado ``ableToTransitionStatus()``, esse método analisa um fluxo lógico de status, e retorna `true` se a transação de status estiver correta e `false` se não estiver]
+
+- Auditoria obrigatória: 
+    - https://github.com/vdanviel/tstech-proposal-management/blob/main/app/Http/Controllers/V1/ProposalController.php#L289 [um dos exemplos de como a auditoria _(ProposalAudit)_ sempre é registrada quando há qualquer tipo de alteração/crisção de proposta, olhe o controller de _Proposal_ e perceba que nos métodos `store()`,`update()`, `submit()`, `approve()`, `reject()`, `cancel()`, há criação em de auditoria]
+
+- Exclusão lógica: 
+    - https://github.com/vdanviel/tstech-proposal-management/blob/main/app/Models/Proposal.php#L16 [feature de soft delete sendo acionada no model _Proposal_]
+    - https://github.com/vdanviel/tstech-proposal-management/blob/main/app/Http/Controllers/V1/ProposalController.php#L363 [no método `cancel()` é feita uma exclusão lógica _soft delete_]
+
+- Busca avançada: 
+    - https://github.com/vdanviel/tstech-proposal-management/blob/main/app/Http/Controllers/V1/ProposalController.php#L20 [busca de propostas _Proposal_ com paginação e filtragem direta de dados]
+
+
