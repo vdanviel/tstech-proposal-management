@@ -1,5 +1,5 @@
 # Visão geral:
-Esse projeto é desenvolvido com Laravel e seus recursos, ele possui docker compose e swagger com Scramble.
+Esse projeto é desenvolvido com Laravel e seus recursos, ele possui Docker Compose, cache com Redis e swagger com Scramble.
 
 ## Orientações:
 
@@ -60,7 +60,7 @@ Para rodar e acessar o projeto em sua máquina siga os passos:
     | deleted_at   | timestamp        |
 
 
-4. ** ProposalAudit**
+4. **ProposalAudit**
 
     Entidade de auditoria. Qualquer tipo de alteração na proposta, _(Proposal)_ é gerado uma auditoria _ProposalAudit_.
 
@@ -102,7 +102,7 @@ Os testes do sistema são feito com PHPUnit. Para visualizar acesse _/tests/Feat
     - https://github.com/vdanviel/tstech-proposal-management/blob/main/app/Enums/AppErrorType.php [tipagem de erros]
 
 - Idempotency-Key: 
-    - https://github.com/vdanviel/tstech-proposal-management/blob/main/app/Http/Middleware/IdempotencyMiddleware.php [um middleware adicionado em todas as rotas que alteram ou criam um registro]
+    - https://github.com/vdanviel/tstech-proposal-management/blob/main/app/Http/Middleware/IdempotencyMiddleware.php [um middleware adicionado em todas as rotas que alteram ou criam um registro, o middleware usa cache com Redis para localizar a key com expiração de 10 minutos]
 
 - Optimistic Lock: 
     - https://github.com/vdanviel/tstech-proposal-management/tree/main/app/Traits/HasOptimisticLocking.php [um trait que utiliza o evento de ciclo de vida de models no Laravel "``updating::``"]
@@ -119,5 +119,3 @@ Os testes do sistema são feito com PHPUnit. Para visualizar acesse _/tests/Feat
 
 - Busca avançada: 
     - https://github.com/vdanviel/tstech-proposal-management/blob/main/app/Http/Controllers/V1/ProposalController.php#L20 [busca de propostas _Proposal_ com paginação e filtragem direta de dados]
-
-
