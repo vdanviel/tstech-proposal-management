@@ -13,8 +13,8 @@ class ProposalAuditFactory extends Factory
 
         return [
             'proposal_id' => Proposal::factory(),
-            'actor' => fake()->word() . ":" . fake()->numberBetween(1,1000),
-            'event' => fake()->randomElement(ProposalAuditEvent::cases()),
+            'actor' => $this->faker->word() . ":" . $this->faker->numberBetween(1,1000),
+            'event' => $this->faker->randomElement(ProposalAuditEvent::cases()),
             'payload' => json_encode([
                 'id' => 2,
                 'origin' => 'APP',

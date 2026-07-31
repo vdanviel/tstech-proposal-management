@@ -22,10 +22,10 @@ class ProposalFactory extends Factory
     {
         return [
             'client_id' => Client::query()->inRandomOrder()->value('id') ?? Client::factory(),
-            'product' => fake()->word(),
-            'monthly_value' => fake()->randomFloat(2, 0, 10000),
-            'status' => fake()->randomElement(ProposalStatus::cases())->value,
-            'origin' => fake()->randomElement(ProposalOrigin::cases())->value,
+            'product' => $this->faker->word(),
+            'monthly_value' => $this->faker->randomFloat(2, 0, 10000),
+            'status' => $this->faker->randomElement(ProposalStatus::cases())->value,
+            'origin' => $this->faker->randomElement(ProposalOrigin::cases())->value,
         ];
     }
 }
