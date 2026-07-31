@@ -27,7 +27,7 @@ class IdempotencyMiddleware
         $cacheKey = 'idempotency:' . $idempotencyKey;
 
         //usa o remember para buscar do cache ou executar a requisição e salvar automaticamente
-        $cachedData = Cache::remember($cacheKey, now()->addDay(), function () use ($next, $request) {
+        $cachedData = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($next, $request) {
 
             //controller processa o request e tras o retorno em $response
             $response = $next($request);
