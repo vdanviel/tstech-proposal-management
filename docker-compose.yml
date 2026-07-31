@@ -1,0 +1,45 @@
+services:
+    tstech:
+        build: .
+        container_name: "tstech"
+        depends_on:
+            - mariadb-tstech
+            - redis-tstech
+        ports:
+            - "8300:8000"
+        networks:
+            - tstech-network
+        env_file:
+            - ./.env.local
+
+    mariadb-tstech:
+        image: mariadb:lts-ubi10
+        container_name: mariadb-tstech
+        environment:
+            MARIADB_DATABASE: tstech
+            MARIADB_ROOT_PASSWORD: "root"
+        ports:
+            - "3307:3306"
+        volumes:
+            - mariadb_data:/var/lib/mysql
+        networks:
+            - tstech-network
+
+    redis-tstech:
+        image: redis:trixie
+        command: redis-server --requirepass "root"
+        container_name: redis-tstech
+        ports:
+            - "6000:6379"
+        volumes:
+            - redis_data:/data
+        networks:
+            - tstech-network
+
+networks:
+  tstech-network:
+    driver: bridge
+
+volumes:
+  mariadb_data:
+  redis_data:

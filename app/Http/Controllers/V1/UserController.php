@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V1;
 
 use App\Enums\AppErrorType;
 use App\Models\User;
+use Dedoc\Scramble\Attributes\HeaderParameter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -11,6 +12,7 @@ use Illuminate\Support\Facades\Validator;
 class UserController extends Controller
 {
 
+    #[HeaderParameter('Idempotency-Key', description: 'API key for idempotency.', type: 'string', required: false)]
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [

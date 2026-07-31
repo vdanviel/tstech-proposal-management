@@ -9,6 +9,7 @@ use App\Enums\ProposalStatus;
 use App\Models\Client;
 use App\Models\Proposal;
 use App\Models\ProposalAudit;
+use Dedoc\Scramble\Attributes\HeaderParameter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -95,6 +96,7 @@ class ProposalController extends Controller
         ], 200);
     }
 
+    #[HeaderParameter('Idempotency-Key', description: 'API key for idempotency.', type: 'string', required: false)]
     public function store(Request $request ){
 
         $validator = Validator::make($request->all(),
@@ -159,6 +161,7 @@ class ProposalController extends Controller
 
     }
 
+    #[HeaderParameter('Idempotency-Key', description: 'API key for idempotency.', type: 'string', required: false)]
     public function update(Request $request){
 
         $validator = Validator::make($request->all(),
@@ -245,6 +248,7 @@ class ProposalController extends Controller
 
     }
 
+    #[HeaderParameter('Idempotency-Key', description: 'API key for idempotency.', type: 'string', required: false)]
     public function submit(Request $request){
 
         $proposal = Proposal::find($request->route('id'), ['*']);
@@ -281,6 +285,7 @@ class ProposalController extends Controller
 
     }
 
+    #[HeaderParameter('Idempotency-Key', description: 'API key for idempotency.', type: 'string', required: false)]
     public function approve(Request $request){
 
         $proposal = Proposal::find($request->route('id'), ['*']);
@@ -317,6 +322,7 @@ class ProposalController extends Controller
 
     }
 
+    #[HeaderParameter('Idempotency-Key', description: 'API key for idempotency.', type: 'string', required: false)]
     public function reject(Request $request){
 
         $proposal = Proposal::find($request->route('id'), ['*']);
@@ -353,6 +359,7 @@ class ProposalController extends Controller
 
     }
 
+    #[HeaderParameter('Idempotency-Key', description: 'API key for idempotency.', type: 'string', required: false)]
     public function cancel(Request $request){
 
         $proposal = Proposal::find($request->route('id'), ['*']);
