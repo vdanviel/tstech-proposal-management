@@ -103,9 +103,11 @@ Os testes do sistema são feito com PHPUnit. Para visualizar acesse _/tests/Feat
 
 - Idempotency-Key: 
     - https://github.com/vdanviel/tstech-proposal-management/blob/main/app/Http/Middleware/IdempotencyMiddleware.php [um middleware adicionado em todas as rotas que alteram ou criam um registro, o middleware usa cache com Redis para localizar a key com expiração de 10 minutos]
+    - <img width="1440" height="960" alt="image" src="https://github.com/user-attachments/assets/e68afa4c-9190-48cc-b8a5-a9876bc9ff17" />
 
 - Optimistic Lock: 
     - https://github.com/vdanviel/tstech-proposal-management/tree/main/app/Traits/HasOptimisticLocking.php [um trait que utiliza o evento de ciclo de vida de models no Laravel "``updating::``"]
+    - <img width="1440" height="960" alt="image" src="https://github.com/user-attachments/assets/d7e45209-b9a6-47d3-a218-62a408e5fc7d" />
 
 - Fluxo de status: 
     - https://github.com/vdanviel/tstech-proposal-management/blob/main/app/Enums/ProposalStatus.php [um enum que dispõe de um metodo chamado ``ableToTransitionStatus()``, esse método analisa um fluxo lógico de status, e retorna `true` se a transação de status estiver correta e `false` se não estiver]
