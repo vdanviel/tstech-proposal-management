@@ -389,7 +389,7 @@ class ProposalController extends Controller
         ProposalAudit::create([
             'proposal_id' => $proposal->id,
             'actor' => explode(" ", $user->name)[0] . ":" . $user->id,
-            'event' => ProposalAuditEvent::STATUS_CHANGED->value,
+            'event' => ProposalAuditEvent::DELETED_LOGICAL->value,
             'payload' => $proposal->toJson()
         ]);
 
